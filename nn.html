@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simulation - Transformations Lentes et Rapides</title>
+
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:'Segoe UI',sans-serif;
+}
+
+body{
+background:linear-gradient(135deg,#eef5ff,#d8ebff);
+padding:20px;
+}
+
+h1{
+text-align:center;
+color:#163d73;
+margin-bottom:20px;
+}
+
+.container{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:20px;
+}
+
+.card{
+background:white;
+padding:20px;
+border-radius:15px;
+box-shadow:0 5px 20px rgba(0,0,0,0.1);
+}
+
+h2{
+margin-bottom:15px;
+color:#1e3a8a;
+}
+
+.beakers{
+display:flex;
+justify-content:center;
+gap:30px;
+margin:20px 0;
+}
+
+.beaker{
+width:100px;
+height:130px;
+border:4px solid #666;
+border-radius:0 0 15px 15px;
+position:relative;
+overflow:hidden;
+background:white;
+}
+
+.liquid{
+position:absolute;
+bottom:0;
+width:100%;
+height:70%;
+transition:all 1s linear;
+}
+
+.purple{
+background:#9b59b6;
+}
+
+.transparent{
+background:rgba(255,255,255,0.1);
+}
+
+.blue{
+background:#0d47a1;
+}
+
+.controls{
+text-align:center;
+}
+
+button{
+padding:12px 20px;
+border:none;
+border-radius:8px;
+cursor:pointer;
+font-size:16px;
+font-weight:bold;
+margin:5px;
+color:white;
+}
+
+.start{
+background:#16a34a;
+}
+
+.reset{
+background:#dc2626;
+}
+
+.temperature{
+margin-top:15px;
+}
+
+input[type=range]{
+width:100%;
+}
+
+.timer{
+font-size:28px;
+font-weight:bold;
+text-align:center;
+margin:15px;
+color:#0f172a;
+}
+
+.result{
+margin-top:15px;
+padding:10px;
+border-radius:10px;
+background:#f3f4f6;
+}
+
+.materials{
+grid-column:span 2;
+}
+
+ul{
+line-height:1.8;
+}
+
+@media(max-width:900px){
+.container{
+grid-template-columns:1fr;
+}
+.materials{
+grid-column:span 1;
+}
+}
+
+</style>
+</head>
+<body>
+
+<h1>⚗️ Simulation des Transformations Lentes et Rapides</h1>
+
+<div class="container">
+
+<!-- EXPERIENCE LENTE -->
+
+<div class="card">
+
+<h2>Expérience 1 : Réaction Lente</h2>
+
+<p>
+KMnO₄ acidifié + H₂C₂O₄
+</p>
+
+<div class="beakers">
+
+<div class="beaker">
+<div id="slowLiquid" class="liquid purple"></div>
+</div>
+
+</div>
+
+<div class="timer" id="slowTimer">00.0 s</div>
+
+<div class="temperature">
+<label>
+🌡 Température :
+<span id="tempValue">20</span> °C
+</label>
+
+<input
+type="range"
+id="temperature"
+min="20"
+max="40"
+value="20">
+</div>
+
+<div class="controls">
+<button class="start" onclick="startSlow()">
+Démarrer
+</button>
+
+<button class="reset" onclick="resetSlow()">
+Réinitialiser
+</button>
+</div>
+
+<div id="slowResult" class="result">
+La solution violette se décolore progressivement.
+</div>
+
+</div>
+
+<!-- EXPERIENCE RAPIDE -->
+
+<div class="card">
+
+<h2>Expérience 2 : Horloge à Iode</h2>
+
+<p>
+Na₂S₂O₃ + HCl
+</p>
+
+<div class="beakers">
+
+<div class="beaker">
+<div id="fastLiquid" class="liquid transparent"></div>
+</div>
+
+</div>
+
+<div class="timer" id="fastTimer">00.0 s</div>
+
+<div class="controls">
+
+<button class="start" onclick="startFast()">
+Démarrer
+</button>
+
+<button class="reset" onclick="resetFast()">
+Réinitialiser
+</button>
+
+</div>
+
+<div id="fastResult" class="result">
+La coloration bleue apparaît brusquement.
+</div>
+
+</div>
+
+<!-- MATERIEL -->
+
+<div class="card materials">
+
+<h2>🧪 Matériel et Réactifs</h2>
+
+<ul>
+<li>Solution de permanganate de potassium KMnO₄ acidifiée</li>
+<li>Solution d'acide oxalique H₂C₂O₄</li>
+<li>Réactifs de l'horloge à iode : Na₂S₂O₃ + HCl</li>
+<li>Béchers</li>
+<li>Chronomètre</li>
+<li>Thermomètre</li>
+<li>Bain-marie thermostaté</li>
+<li>Glaçons</li>
+</ul>
+
+<div id="comparison" class="result">
+Lancez les deux expériences puis comparez les temps.
+</div>
+
+</div>
+
+</div>
+
+<script>
+
+let slowInterval;
+let fastInterval;
+
+let slowTime = 0;
+let fastTime = 0;
+
+let slowFinal = null;
+let fastFinal = null;
+
+const tempSlider =
+document.getElementById("temperature");
+
+tempSlider.addEventListener("input",()=>{
+
+document.getElementById("tempValue")
+.textContent=tempSlider.value;
+
+});
+
+function startSlow(){
+
+clearInterval(slowInterval);
+
+slowTime=0;
+
+let temp=parseInt(tempSlider.value);
+
+/*
+Influence température
+20°C → 12 s
+40°C → 4 s
+*/
+
+let reactionTime =
+12 - ((temp-20)/20)*8;
+
+let liquid =
+document.getElementById("slowLiquid");
+
+liquid.className="liquid purple";
+
+slowInterval=setInterval(()=>{
+
+slowTime+=0.1;
+
+document.getElementById("slowTimer")
+.textContent=
+slowTime.toFixed(1)+" s";
+
+let ratio=
+slowTime/reactionTime;
+
+let opacity=
+Math.max(0,1-ratio);
+
+liquid.style.opacity=opacity;
+
+if(slowTime>=reactionTime){
+
+clearInterval(slowInterval);
+
+slowFinal=reactionTime;
+
+document.getElementById("slowResult")
+.innerHTML=
+"✅ Décoloration complète à <b>"
++reactionTime.toFixed(1)+
+" s</b>";
+
+compareExperiments();
+
+}
+
+},100);
+
+}
+
+function resetSlow(){
+
+clearInterval(slowInterval);
+
+document.getElementById("slowLiquid")
+.style.opacity=1;
+
+document.getElementById("slowTimer")
+.textContent="00.0 s";
+
+}
+
+function startFast(){
+
+clearInterval(fastInterval);
+
+fastTime=0;
+
+let liquid=
+document.getElementById("fastLiquid");
+
+liquid.className="liquid transparent";
+
+const reactionTime=1.5;
+
+fastInterval=setInterval(()=>{
+
+fastTime+=0.1;
+
+document.getElementById("fastTimer")
+.textContent=
+fastTime.toFixed(1)+" s";
+
+if(fastTime>=reactionTime){
+
+clearInterval(fastInterval);
+
+liquid.className="liquid blue";
+
+fastFinal=reactionTime;
+
+document.getElementById("fastResult")
+.innerHTML=
+"✅ Apparition du bleu à <b>"
++reactionTime+
+" s</b>";
+
+compareExperiments();
+
+}
+
+},100);
+
+}
+
+function resetFast(){
+
+clearInterval(fastInterval);
+
+document.getElementById("fastLiquid")
+.className="liquid transparent";
+
+document.getElementById("fastTimer")
+.textContent="00.0 s";
+
+}
+
+function compareExperiments(){
+
+if(slowFinal && fastFinal){
+
+let text="";
+
+text+="<h3>Analyse</h3>";
+
+text+="Temps réaction lente : "
++slowFinal.toFixed(1)
++" s<br>";
+
+text+="Temps réaction rapide : "
++fastFinal.toFixed(1)
++" s<br><br>";
+
+if(slowFinal>fastFinal){
+
+text+="✅ La réaction horloge à iode est beaucoup plus rapide que l’oxydation de l’acide oxalique.<br><br>";
+
+}
+
+if(parseInt(tempSlider.value)>=40){
+
+text+="🔥 L'augmentation de la température accélère la réaction lente.";
+}
+
+document.getElementById("comparison")
+.innerHTML=text;
+
+}
+
+}
+
+</script>
+
+</body>
+</html>
